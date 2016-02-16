@@ -22,7 +22,9 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
-app.use('/', routes);
+app.get('/', (req, res) => {
+  res.send('GET it');
+});
 app.post('/jira', require('./jira-bot'));
 
 // catch 404 and forward to error handler
@@ -56,5 +58,5 @@ app.use(function(err, req, res, next) {
   });
 });
 
-app.listen(3020);
+app.listen(process.env.PORT || 3020);
 module.exports = app;
