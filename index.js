@@ -23,6 +23,19 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
+app.use('/', (req, res, next) => {
+  console.log(req.body)
+
+  // if (process.env.SLACK_TOKEN !== req.body.token) {
+  //   return res.status(403).json({text: 'Invalid token'});
+  // }
+
+  next();
+});
+
+app.get('/', (req, res) => {
+  res.json({text: 'Welcome to the showdme-jira-bot!'});
+});
 
 app.post('/jira', jira.lookupTicket);
 
