@@ -1,24 +1,24 @@
 'use strict';
 const request = require('request');
+const _ = require('lodash');
 //const async = require('async');
 
 module.exports = {
   lookupTicket: (req, res, next) => {
-    let smdRegex = /(SMD|DES)-[0-9]*/ig;
+    let ticketRegex = /(SMD|DES)-[0-9]*/ig;
     let baseUrl = 'https://monimus.atlassian.net';
     let match, matches = [];
     let loginData = `${process.env.JIRA_USERNAME}:${process.env.JIRA_PASSWORD}`;
     var encodedLogin = new Buffer(loginData).toString('base64');
 
-    while (match = smdRegex.exec(req.body.text)) {
+    while (match = ticketRegex.exec(req.body.text)) {
       matches.push(match[0]);
     }
 
     if (!matches.length) {
-      return res.json({text: 'Must include the ticket name.'});
+      return res.json({text: 'Missing the ticket name!'});
     }
     match = matches[0];
-    console.log(matches, match);
     let params = {
       method: 'GET',
       uri: `${process.env.JIRA_API_URL}/${match}`,
@@ -36,19 +36,17 @@ module.exports = {
       if (data.statusCode !== 200) {
         return res.status(data.statusCode);
       }
-      console.log('body', body);
 
       let result = JSON.parse(body);
-      console.log('result', result);
       let response = {
-        title: `${result.key}: ${result.fields.summary}`,
-        title_link: `${process.env.JIRA_URL}/${result.key}`,
-        attachments: {
+        attachments: [{
+          title: `${result.key}: ${result.fields.summary}`,
+          title_link: `${process.env.JIRA_URL}/${result.key}`,
           text: result.fields.description,
           fields: [
             {
               title: 'Assigned To',
-              value: result.fields.assignee.displayName,
+              value: (result.fields.assignee && result.fields.assignee.displayName) || 'unassigned',
               short: true
             },
             {
@@ -56,11 +54,30 @@ module.exports = {
               value: result.fields.status.name,
               short: true
             }
-          ]
-        }
+          ],
+          color: '#3aa3e3'
+        }]
       };
-      console.log('response', response);
-      return res.json(response);
+
+      response.response_type = /show/i.test(req.body.text)
+        ? 'in_channel'
+        : 'ephemeral';
+
+      if (!req.body.response_url) {
+        res.set('Content-Type', 'application/json');
+        return res.status(200).json(response);
+      }
+
+      res.sendStatus(200);
+
+      let responseParams = {
+        uri: req.body.response_url,
+        'Content-type': 'application/json',
+        body: JSON.stringify(response)
+      };
+      request.post(responseParams, (err, data, body) => {
+        console.log(err, body);
+      });
     });
   }
 };
