@@ -18,6 +18,7 @@ module.exports = {
       return res.json({text: 'Must include the ticket name.'});
     }
     match = matches[0];
+    console.log(matches, match);
     let params = {
       method: 'GET',
       uri: `${process.env.JIRA_API_URL}/${match}`,
@@ -26,7 +27,7 @@ module.exports = {
         'Content-Type': 'application/json'
       }
     };
-
+    console.log(params);
     request.get(params, (err, data, body) => {
       if (err) return next(err);
       if (data.statusCode === 404) {
@@ -35,7 +36,10 @@ module.exports = {
       if (data.statusCode !== 200) {
         return res.status(data.statusCode);
       }
+      console.log('body', body);
+
       let result = JSON.parse(body);
+      console.log('result', result);
       let response = {
         title: `${result.key}: ${result.fields.summary}`,
         title_link: `${process.env.JIRA_URL}/${result.key}`,
@@ -55,6 +59,7 @@ module.exports = {
           ]
         }
       };
+      console.log('response', response);
       return res.json(response);
     });
   }
