@@ -5,20 +5,9 @@ const _ = require('lodash');
 
 module.exports = {
   lookupTicket: (req, res, next) => {
-    let ticketRegex = /(SMD|DES)-[0-9]*/ig;
-    let baseUrl = 'https://monimus.atlassian.net';
-    let match, matches = [];
-    let loginData = `${process.env.JIRA_USERNAME}:${process.env.JIRA_PASSWORD}`;
-    var encodedLogin = new Buffer(loginData).toString('base64');
-
-    while (match = ticketRegex.exec(req.body.text)) {
-      matches.push(match[0]);
-    }
-
-    if (!matches.length) {
-      return res.json({text: 'Missing the ticket name!'});
-    }
-    match = matches[0];
+    let match = req.matches[0];
+    console.log(req.app.loginCredentials);
+    var encodedLogin = new Buffer(req.app.settings.loginCredentials).toString('base64');
     let params = {
       method: 'GET',
       uri: `${process.env.JIRA_API_URL}/${match}`,
@@ -27,7 +16,7 @@ module.exports = {
         'Content-Type': 'application/json'
       }
     };
-    console.log(params);
+
     request.get(params, (err, data, body) => {
       if (err) return next(err);
       if (data.statusCode === 404) {
@@ -68,8 +57,6 @@ module.exports = {
         return res.status(200).json(response);
       }
 
-      res.sendStatus(200);
-
       let responseParams = {
         uri: req.body.response_url,
         'Content-type': 'application/json',
@@ -79,5 +66,9 @@ module.exports = {
         console.log(err, body);
       });
     });
+  },
+
+  getCommitsForTicket: (req, res, next) => {
+
   }
 };

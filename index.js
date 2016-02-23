@@ -8,6 +8,7 @@ var bodyParser = require('body-parser');
 
 var routes = require('./routes/index');
 var users = require('./routes/users');
+var middleware = require('./middleware');
 var jira = require('./jira-bot');
 var app = express();
 
@@ -23,6 +24,8 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
+app.set('loginCredentials', `${process.env.JIRA_USERNAME}:${process.env.JIRA_PASSWORD}`);
+
 app.use('/', (req, res, next) => {
   console.log(req.body)
 
@@ -37,11 +40,11 @@ app.get('/', (req, res) => {
   res.json({text: 'Welcome to the showdme-jira-bot!'});
 });
 
-app.post('/jira', jira.lookupTicket);
-
+app.post('/jira', middleware.findTicketMatches, jira.lookupTicket);
+app.post('/commits', middleware.findTicketMatches, jira.getCommitsForTicket);
 
 // catch 404 and forward to error handler
-app.use(function(req, res, next) {
+app.use((req, res, next) => {
   var err = new Error('Not Found');
   err.status = 404;
   next(err);
@@ -49,7 +52,7 @@ app.use(function(req, res, next) {
 
 
 //if (app.get('env') === 'development') {
-  app.use(function(err, req, res, next) {
+  app.use((err, req, res, next) => {
     res.status(err.status || 500);
     res.render('error', {
       message: err.message,
