@@ -8,8 +8,8 @@ var bodyParser = require('body-parser');
 
 var routes = require('./routes/index');
 var users = require('./routes/users');
-var middleware = require('./middleware');
-var jira = require('./jira-bot');
+var jira = require('./jira');
+var bot = require('./jira-bot');
 var app = express();
 
 // view engine setup
@@ -40,8 +40,17 @@ app.get('/', (req, res) => {
   res.json({text: 'Welcome to the showdme-jira-bot!'});
 });
 
-app.post('/jira', middleware.findTicketMatches, jira.lookupTicket);
-app.post('/commits', middleware.findTicketMatches, jira.getCommitsForTicket);
+app.post('/jira',
+  jira.findTicketMatches,
+  jira.fetchTicket,
+  bot.sendTicket
+);
+
+app.post('/commits',
+  jira.findTicketMatches,
+  jira.fetchTicket,
+  bot.getCommits
+);
 
 // catch 404 and forward to error handler
 app.use((req, res, next) => {

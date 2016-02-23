@@ -1,74 +1,56 @@
 'use strict';
 const request = require('request');
 const _ = require('lodash');
-//const async = require('async');
 
 module.exports = {
-  lookupTicket: (req, res, next) => {
-    let match = req.matches[0];
-    console.log(req.app.loginCredentials);
-    var encodedLogin = new Buffer(req.app.settings.loginCredentials).toString('base64');
-    let params = {
-      method: 'GET',
-      uri: `${process.env.JIRA_API_URL}/${match}`,
-      headers: {
-        Authorization: `Basic ${encodedLogin}`,
-        'Content-Type': 'application/json'
-      }
+  sendTicket: (req, res, next) => {
+    let ticket = req.ticket;
+    let response = {
+      attachments: [{
+        title: `${ticket.key}: ${ticket.fields.summary}`,
+        title_link: `${process.env.JIRA_URL}/${ticket.key}`,
+        text: ticket.fields.description,
+        fields: [
+          {
+            title: 'Assigned To',
+            value: (ticket.fields.assignee && ticket.fields.assignee.displayName) || 'unassigned',
+            short: true
+          },
+          {
+            title: 'Status',
+            value: ticket.fields.status.name,
+            short: true
+          }
+        ],
+        color: '#3aa3e3'
+      }]
     };
 
-    request.get(params, (err, data, body) => {
-      if (err) return next(err);
-      if (data.statusCode === 404) {
-        return res.json({text: 'Issue does not exist'});
-      }
-      if (data.statusCode !== 200) {
-        return res.status(data.statusCode);
-      }
+    response.response_type = /show/i.test(req.body.text)
+      ? 'in_channel'
+      : 'ephemeral';
 
-      let result = JSON.parse(body);
-      let response = {
-        attachments: [{
-          title: `${result.key}: ${result.fields.summary}`,
-          title_link: `${process.env.JIRA_URL}/${result.key}`,
-          text: result.fields.description,
-          fields: [
-            {
-              title: 'Assigned To',
-              value: (result.fields.assignee && result.fields.assignee.displayName) || 'unassigned',
-              short: true
-            },
-            {
-              title: 'Status',
-              value: result.fields.status.name,
-              short: true
-            }
-          ],
-          color: '#3aa3e3'
-        }]
-      };
+    if (!req.body.response_url) {
+      res.set('Content-Type', 'application/json');
+      return res.status(200).json(response);
+    }
 
-      response.response_type = /show/i.test(req.body.text)
-        ? 'in_channel'
-        : 'ephemeral';
-
-      if (!req.body.response_url) {
-        res.set('Content-Type', 'application/json');
-        return res.status(200).json(response);
-      }
-
-      let responseParams = {
-        uri: req.body.response_url,
-        'Content-type': 'application/json',
-        body: JSON.stringify(response)
-      };
-      request.post(responseParams, (err, data, body) => {
-        console.log(err, body);
-      });
+    let responseParams = {
+      uri: req.body.response_url,
+      'Content-type': 'application/json',
+      body: JSON.stringify(response)
+    };
+    request.post(responseParams, (err, data, body) => {
+      console.log(err, body);
     });
   },
 
-  getCommitsForTicket: (req, res, next) => {
-
+  getCommits: (req, res, next) => {
+    let ticket = req.ticket;
+    let commitsUrl = 'https://monimus.atlassian.net/rest/dev-status/1.0/issue/summary?issueId=20802&_=1456263267288';
+    request(commitsUrl, (err, data, body) => {
+      console.log(data, body);
+      return res.json({data: body});
+    });
   }
 };
