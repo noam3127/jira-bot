@@ -114,7 +114,7 @@ module.exports = {
       try {
         var body = JSON.parse(_body);
       } catch(e){
-        return next(e);
+        return req.body.response_url ? console.log(e) : next(e);
       }
       if (!body.detail.length || !body.detail[0].repositories || !body.detail[0].repositories.length) {
         return respond(req, res, {text: `No commits found for ${ticket.key}`})
