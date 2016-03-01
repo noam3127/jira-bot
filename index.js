@@ -8,8 +8,7 @@ var bodyParser = require('body-parser');
 
 var routes = require('./routes/index');
 var users = require('./routes/users');
-var jira = require('./jira');
-var bot = require('./jira-bot');
+var jira = require('./jira-bot');
 var app = express();
 
 // view engine setup
@@ -27,29 +26,22 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.set('loginCredentials', `${process.env.JIRA_USERNAME}:${process.env.JIRA_PASSWORD}`);
 
 app.use('/', (req, res, next) => {
-  console.log(req.body)
-
   // if (process.env.SLACK_TOKEN !== req.body.token) {
   //   return res.status(403).json({text: 'Invalid token'});
   // }
-
   next();
-});
-
-app.get('/', (req, res) => {
-  res.json({text: 'Welcome to the showdme-jira-bot!'});
 });
 
 app.post('/jira',
   jira.findTicketMatches,
   jira.fetchTicket,
-  bot.sendTicket
+  jira.sendTicket
 );
 
 app.post('/commits',
   jira.findTicketMatches,
   jira.fetchTicket,
-  bot.getCommits
+  jira.getCommits
 );
 
 // catch 404 and forward to error handler
