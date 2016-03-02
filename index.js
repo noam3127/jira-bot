@@ -9,6 +9,7 @@ var bodyParser = require('body-parser');
 var routes = require('./routes/index');
 var users = require('./routes/users');
 var jira = require('./jira-bot');
+var showdme = require('./showdme-bot');
 var app = express();
 
 // view engine setup
@@ -43,6 +44,8 @@ app.post('/commits',
   jira.fetchTicket,
   jira.getCommits
 );
+
+app.post('/envs', showdme.getBuildInfo);
 
 // catch 404 and forward to error handler
 app.use((req, res, next) => {
