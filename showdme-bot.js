@@ -46,7 +46,13 @@ module.exports = {
         return {title: response.env, text: response.branch};
       });
       attachments[0].pretext = `${req.body.user_name} posted:`;
+
       var body = { attachments: attachments };
+
+      if (req.body.text && /show/.test(req.body.text)) {
+        body.response_type = 'in_channel';
+      }
+
       respond(req, res, body);
     });
   }
