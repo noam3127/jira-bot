@@ -28,24 +28,20 @@ module.exports = {
       request(url, (err, data, body) => {
         if (err) return console.log(err); // don't call callback, just ignore
         if (!body) return;
-        var $ = cheerio.load(body);
-        try {
-          var branch = $('br').get(2).next.data;
-          branch = branch.replace('Branch:', '').replace(/(?:\n)\s*/g, '');
-          responses.push({env: envs[index], branch: branch});
-        } catch(e) {
-          console.log(e)
-        }
+        var branch = body.split('<br>')[3];
+        branch = branch.replace('Branch:', '').replace(/(?:\n)\s*/g, '');
+        responses.push({env: envs[index], branch: branch});
         cb();
       });
     }, () => {
       if (!responses.length) {
         return respond(req, res, {text: 'Sorry, there was a problem'});
       }
-      var attachments = responses.map(response => {
-        return {title: response.env, text: response.branch};
-      });
-      attachments[0].pretext = `${req.body.user_name} posted:`;
+      var text = responses.reduce((acc, elem) => `${acc}${elem.env}: ${elem.branch}\n`, '');
+      var attachments = [{
+        pretext: `${req.body.user_name} posted:`,
+        text: text
+      }];
 
       var body = { attachments: attachments };
 
