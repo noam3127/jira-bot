@@ -2,7 +2,6 @@
 const request = require('request');
 const _ = require('lodash');
 const async = require('async');
-const cheerio = require('cheerio');
 
 function respond(req, res, body) {
   if (req.body.response_url) {
