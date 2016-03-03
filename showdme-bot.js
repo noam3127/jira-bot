@@ -19,6 +19,9 @@ function respond(req, res, body) {
 
 module.exports = {
   getBuildInfo: (req, res, next) => {
+    if (req.body.response_url) {
+      res.json({text: 'loading...'});
+    }
     process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = '0';
     var responses = [];
     var envs = ['showdmestag', 'showdmedev', 'showdmetest', 'showdmeqa'];
