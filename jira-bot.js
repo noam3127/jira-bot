@@ -70,7 +70,7 @@ module.exports = {
     let responseBody = {
       attachments: [{
         title: `${ticket.key}: ${ticket.fields.summary}`,
-        title_link: `${process.env.JIRA_URL}/${ticket.key}`,
+        title_link: `${process.env.JIRA_URL}/browse/${ticket.key}`,
         text: ticket.fields.description,
         fields: [
           {
